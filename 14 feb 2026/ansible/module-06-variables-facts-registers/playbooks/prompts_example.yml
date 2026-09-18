@@ -1,0 +1,30 @@
+---
+- name: Interactive playbook
+  hosts: webservers
+  vars_prompt:
+    - name: username
+      prompt: "Enter the username"
+      private: no
+
+    - name: password
+      prompt: "Enter the password"
+      private: yes
+      encrypt: sha512_crypt
+      confirm: yes
+
+    - name: environment
+      prompt: "Which environment? (dev/staging/prod)"
+      default: "dev"
+      private: no
+
+  tasks:
+    - name: Create user
+      user:
+        name: "{{ username }}"
+        password: "{{ password }}"
+        state: present
+      become: yes
+
+    - name: Show environment
+      debug:
+        msg: "Deploying to {{ environment }}"

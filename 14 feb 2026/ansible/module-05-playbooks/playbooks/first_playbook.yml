@@ -1,0 +1,28 @@
+---
+- name: Configure web servers
+  hosts: webservers
+  become: yes
+
+  tasks:
+    - name: Ensure nginx is installed
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Start and enable nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Deploy index page
+      copy:
+        content: |
+          <html>
+          <body><h1>Hello from {{ inventory_hostname }}</h1></body>
+          </html>
+        dest: /var/www/html/index.html
+        owner: www-data
+        group: www-data
+        mode: '0644'

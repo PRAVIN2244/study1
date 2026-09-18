@@ -1,0 +1,31 @@
+version: '3.8'
+services:
+  control:
+    image: ubuntu:22.04
+    container_name: ansible-control
+    hostname: control
+    command: sleep infinity
+    volumes:
+      - ./ansible:/ansible
+    networks:
+      ansible_net:
+        ipv4_address: 172.20.0.10
+
+  web1:
+    image: ubuntu:22.04
+    container_name: ansible-web1
+    hostname: web1
+    command: >
+      bash -c "apt-get update && apt-get install -y openssh-server &&
+      echo 'root:password' | chpasswd &&
+      service ssh start && sleep infinity"
+    networks:
+      ansible_net:
+        ipv4_address: 172.20.0.11
+
+networks:
+  ansible_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24

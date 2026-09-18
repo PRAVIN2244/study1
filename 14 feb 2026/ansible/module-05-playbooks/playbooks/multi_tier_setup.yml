@@ -1,0 +1,63 @@
+---
+# Play 1: Common setup for all servers
+- name: Common configuration
+  hosts: all
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install common packages
+      apt:
+        name: [vim, curl, wget, htop, net-tools]
+        state: present
+
+    - name: Set timezone
+      timezone:
+        name: UTC
+
+# Play 2: Web servers
+- name: Configure web servers
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+
+    - name: Start nginx
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
+
+# Play 3: Database servers
+- name: Configure database servers
+  hosts: dbservers
+  become: yes
+  tasks:
+    - name: Install PostgreSQL
+      apt:
+        name: [postgresql, postgresql-contrib, python3-psycopg2]
+        state: present
+
+    - name: Start PostgreSQL
+      service:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Create application database
+      become_user: postgres
+      postgresql_db:
+        name: myapp_db
+        state: present

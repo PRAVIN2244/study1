@@ -1,0 +1,5 @@
+---
+ntp_server: time.google.com
+dns_servers:
+  - 8.8.8.8
+  - 8.8.4.4

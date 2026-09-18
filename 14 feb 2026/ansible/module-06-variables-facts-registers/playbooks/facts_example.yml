@@ -1,0 +1,42 @@
+---
+- name: Display system facts
+  hosts: webservers
+  gather_facts: yes
+
+  tasks:
+    - name: Show OS information
+      debug:
+        msg: |
+          Hostname: {{ ansible_hostname }}
+          OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+          Kernel: {{ ansible_kernel }}
+          Architecture: {{ ansible_architecture }}
+
+    - name: Show hardware info
+      debug:
+        msg: |
+          CPUs: {{ ansible_processor_vcpus }}
+          RAM: {{ ansible_memtotal_mb }} MB
+          Swap: {{ ansible_swaptotal_mb }} MB
+
+    - name: Show network info
+      debug:
+        msg: |
+          IP: {{ ansible_default_ipv4.address }}
+          MAC: {{ ansible_default_ipv4.macaddress }}
+          Gateway: {{ ansible_default_ipv4.gateway }}
+          Interface: {{ ansible_default_ipv4.interface }}
+
+    - name: Show disk info
+      debug:
+        msg: "Mount {{ item.mount }} - Size: {{ item.size_total }} - Free: {{ item.size_available }}"
+      loop: "{{ ansible_mounts }}"
+      when: item.mount == "/"
+
+    - name: Set a fact based on OS
+      set_fact:
+        package_manager: "{{ 'apt' if ansible_os_family == 'Debian' else 'yum' }}"
+
+    - name: Use the dynamic fact
+      debug:
+        msg: "Using {{ package_manager }} on {{ ansible_distribution }}"

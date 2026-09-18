@@ -1,0 +1,258 @@
+###############################################################################
+# ANSIBLE CHECK MODE (DRY RUN)
+#
+# Check mode simulates playbook execution WITHOUT making any changes.
+# It shows what WOULD change, allowing you to verify before applying.
+#
+#
+# HOW TO USE CHECK MODE:
+# ──────────────────────
+#
+# Basic check mode:
+# $ ansible-playbook playbook.yml --check
+#
+# Check mode with diff (shows file content changes):
+# $ ansible-playbook playbook.yml --check --diff
+#
+# Output comparison:
+#
+# NORMAL RUN:
+# $ ansible-playbook playbook.yml
+# TASK [Install nginx] *********************************************************
+# changed: [web1]                    <-- Actually installed nginx
+#
+# CHECK MODE:
+# $ ansible-playbook playbook.yml --check
+# TASK [Install nginx] *********************************************************
+# changed: [web1]                    <-- Would install nginx (but didn't)
+#
+# CHECK MODE + DIFF:
+# $ ansible-playbook playbook.yml --check --diff
+# TASK [Deploy nginx config] ***************************************************
+# --- before: /etc/nginx/nginx.conf
+# +++ after: /home/user/.ansible/tmp/nginx.conf.j2
+# @@ -1,5 +1,5 @@
+# -worker_processes 1;
+# +worker_processes auto;
+#  events {
+# -    worker_connections 512;
+# +    worker_connections 1024;
+#  }
+# changed: [web1]                    <-- Shows exact diff, but didn't change
+#
+#
+# IMPORTANT BEHAVIORS IN CHECK MODE:
+# ───────────────────────────────────
+# 1. Modules that support check mode report what WOULD change
+# 2. Modules that DON'T support check mode are SKIPPED
+# 3. command/shell modules are SKIPPED (can't predict output)
+# 4. Registered variables from skipped tasks are UNDEFINED
+# 5. Handlers are NOT triggered (no actual changes)
+#
+#
+# PLAY RECAP DIFFERENCES:
+# ───────────────────────
+# Normal run:
+# web1 : ok=5  changed=3  unreachable=0  failed=0  skipped=0
+#
+# Check mode:
+# web1 : ok=3  changed=2  unreachable=0  failed=0  skipped=2
+#                                                    ^^^^^^^^
+#                                          command/shell tasks skipped
+#
+#
+# WHEN TO USE CHECK MODE:
+# ───────────────────────
+# 1. Before production deployments - verify what will change
+# 2. Compliance auditing - check if systems match desired state
+# 3. Change review - show diffs for approval before applying
+# 4. Testing playbooks - validate logic without side effects
+# 5. Drift detection - find hosts that have drifted from config
+###############################################################################
+
+---
+- name: Check mode demonstration
+  hosts: webservers
+  become: yes
+
+  tasks:
+    ###########################################################################
+    # Tasks that SUPPORT check mode (will report changes)
+    ###########################################################################
+
+    - name: Install nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+      # Check mode output:
+      # changed: [web1]  (would install, but didn't)
+      # Normal output:
+      # changed: [web1]  (actually installed)
+
+    - name: Deploy nginx configuration
+      template:
+        src: templates/nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+      # Check mode + diff output:
+      # --- before: /etc/nginx/nginx.conf
+      # +++ after: /tmp/ansible-tmp/nginx.conf.j2
+      # @@ -1,3 +1,3 @@
+      # -worker_processes 1;
+      # +worker_processes auto;
+      # changed: [web1]
+
+    - name: Ensure nginx is running
+      service:
+        name: nginx
+        state: started
+        enabled: yes
+      # Check mode output:
+      # ok: [web1]  (already running, no change needed)
+
+    - name: Create application directory
+      file:
+        path: /opt/myapp
+        state: directory
+        owner: www-data
+        mode: '0755'
+      # Check mode output:
+      # changed: [web1]  (directory would be created)
+
+    - name: Deploy index page
+      copy:
+        content: |
+          <html>
+          <body><h1>Hello from {{ inventory_hostname }}</h1></body>
+          </html>
+        dest: /var/www/html/index.html
+      # Check mode + diff output:
+      # --- before: /var/www/html/index.html
+      # +++ after: dynamically generated
+      # @@ -1,3 +1,3 @@
+      #  <html>
+      # -<body><h1>Default Page</h1></body>
+      # +<body><h1>Hello from web1</h1></body>
+      #  </html>
+      # changed: [web1]
+
+    ###########################################################################
+    # Tasks that DON'T support check mode (will be SKIPPED)
+    ###########################################################################
+
+    - name: Run database migration
+      command: /opt/app/migrate.sh
+      # Check mode output:
+      # skipping: [web1]  (command module skipped in check mode)
+
+    - name: Check application version
+      shell: cat /opt/app/VERSION
+      register: app_version
+      # Check mode output:
+      # skipping: [web1]  (shell module skipped in check mode)
+
+    ###########################################################################
+    # Handling check mode in your tasks
+    ###########################################################################
+
+    # Force a task to run even in check mode
+    - name: Gather version info (always runs)
+      command: cat /etc/os-release
+      register: os_info
+      check_mode: no  # This task runs even in --check mode
+      changed_when: false
+
+    - name: Show OS info
+      debug:
+        msg: "{{ os_info.stdout_lines[0] }}"
+
+    # Skip a task in check mode explicitly
+    - name: Dangerous operation (skip in check mode)
+      command: /opt/app/reset_cache.sh
+      when: not ansible_check_mode
+      # In check mode: skipping (because ansible_check_mode is true)
+      # In normal mode: runs normally
+
+    # Different behavior in check mode
+    - name: Conditional on check mode
+      debug:
+        msg: >
+          {{ 'DRY RUN: Would deploy version ' ~ app_version
+             if ansible_check_mode
+             else 'Deploying version ' ~ app_version }}
+      vars:
+        app_version: "2.1.0"
+
+    ###########################################################################
+    # Using check mode for drift detection
+    ###########################################################################
+
+    - name: Verify SSH config matches desired state
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^PermitRootLogin'
+        line: 'PermitRootLogin no'
+      register: ssh_config
+      # In check mode:
+      #   changed: [web1]  -> SSH config has DRIFTED from desired state
+      #   ok: [web1]       -> SSH config matches desired state
+
+    - name: Report drift
+      debug:
+        msg: >
+          {{ inventory_hostname }}: SSH config
+          {{ 'HAS DRIFTED - needs remediation' if ssh_config.changed
+             else 'matches desired state' }}
+      when: ansible_check_mode
+
+# Run examples:
+#
+# $ ansible-playbook check_mode.yml --check
+#
+# PLAY [Check mode demonstration] **********************************************
+#
+# TASK [Gathering Facts] *******************************************************
+# ok: [web1]
+#
+# TASK [Install nginx] *********************************************************
+# changed: [web1]
+#
+# TASK [Deploy nginx configuration] ********************************************
+# changed: [web1]
+#
+# TASK [Ensure nginx is running] ***********************************************
+# ok: [web1]
+#
+# TASK [Create application directory] ******************************************
+# changed: [web1]
+#
+# TASK [Deploy index page] *****************************************************
+# changed: [web1]
+#
+# TASK [Run database migration] ************************************************
+# skipping: [web1]
+#
+# TASK [Check application version] *********************************************
+# skipping: [web1]
+#
+# TASK [Gather version info (always runs)] *************************************
+# ok: [web1]
+#
+# TASK [Show OS info] **********************************************************
+# ok: [web1] => {
+#     "msg": "PRETTY_NAME=\"Ubuntu 22.04.3 LTS\""
+# }
+#
+# TASK [Dangerous operation (skip in check mode)] ******************************
+# skipping: [web1]
+#
+# TASK [Verify SSH config matches desired state] *******************************
+# changed: [web1]
+#
+# TASK [Report drift] **********************************************************
+# ok: [web1] => {
+#     "msg": "web1: SSH config HAS DRIFTED - needs remediation"
+# }
+#
+# PLAY RECAP *******************************************************************
+# web1 : ok=7  changed=4  unreachable=0  failed=0  skipped=3

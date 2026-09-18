@@ -1,0 +1,6 @@
+---
+app_name: mywebapp
+app_version: "2.1.0"
+app_port: 8080
+app_user: www-data
+app_dir: /opt/mywebapp

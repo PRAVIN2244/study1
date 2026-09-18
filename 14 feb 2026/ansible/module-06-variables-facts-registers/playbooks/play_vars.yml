@@ -1,0 +1,32 @@
+---
+- name: Variable examples
+  hosts: webservers
+  become: yes
+
+  vars:
+    http_port: 80
+    app_name: mywebapp
+    max_connections: 100
+    admin_email: admin@example.com
+    packages:
+      - nginx
+      - php-fpm
+      - php-mysql
+    database:
+      host: db1.example.com
+      port: 5432
+      name: myapp_db
+
+  tasks:
+    - name: Install packages
+      apt:
+        name: "{{ packages }}"
+        state: present
+
+    - name: Show app name
+      debug:
+        msg: "Deploying {{ app_name }} on port {{ http_port }}"
+
+    - name: Show database host
+      debug:
+        msg: "DB at {{ database.host }}:{{ database.port }}/{{ database.name }}"

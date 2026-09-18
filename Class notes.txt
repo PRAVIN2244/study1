@@ -1,0 +1,689 @@
+3 Steps in Build process:
+  # Compile
+  # Unit Test
+  # Package
+
+Java Build
+========
+$ sudo apt update
+$ sudo apt install -y git
+$ sudo apt install -y openjdk-17-jdk
+$ sudo apt install -y maven
+$ java --version
+$ mvn --version
+
+$ git clone https://gitlab.com/scmlearningcentre/mavenbuild.git demobuild 
+$ git checkout springboot
+$ mvn clean package -Dmaven.test.skip=true
+
+# Full Build : mvn clean package
+# Incremental Build : mvn package
+
+Java Deployment
+==============
+$ sudo apt install -y docker.io
+$ sudo usermod -a -G docker ubuntu
+$ docker run --name mydb -p 3306:3306 -e MYSQL_USER=wezvatech -e MYSQL_PASSWORD=password -e MYSQL_ROOT_PASSWORD=password -e MYSQL_DATABASE=mywezvadb -d mysql:8.1
+$ docker exec -it mydb mysql -uroot -ppassword
+  mysql> show databases;
+  mysql> use mywezvadb;
+  mysql> show tables;
+  mysql> select * from books;
+
+Log Levels:  INFO, WARN, ERROR, DEBUG, TRACE
+---------------
+DB|UserDB|PasswordDB|Log-Level|Log-file|Certificates|Heap-Memory
+Log Files: server.log / access.log / users.log
+
+$ nohup java -jar target/wezvatech-springboot-mysql-9739110917.jar 2>&1 &
+   # Adding min & max heap memory: -Xms512m -Xmx512m
+   # Adding log level:  -Dlogging.level.org.springframework=INFO 
+   # Adding log file:  --logging.file.name=/home/ubuntu/server.log
+
+$ netstat -an |grep 8080
+$ ps aux | grep java
+$ curl -s http://localhost:8080/books
+
+# Add a entry to test the application
+$ curl -X POST -H "Content-Type: application/json" -d '{"title":"Book A", "price":49.99, "publishDate":"2024-04-12"}' "http://localhost:8080/books"
+
+Node Build
+=========
+Build Steps:
+ - there is no compilation
+ - unit test using a framework
+ - create a tar/zip with all the necessary *.js
+
+$ sudo apt install -y nodejs
+$ sudo apt install -y npm
+$ node -v
+
+# Build & Unit test:
+$ git clone https://gitlab.com/scmlearningcentre/nodebuild.git nodebuild
+$ npm install            ( download developer modules like unit test, security i.e codecoverage/lint)
+$ npm test
+$ tar -cvf samplenode.tar app.js *html
+
+Node Deploy (Node doesnt have any log levels)
+==========
+$ tar -xvf samplenode.tar
+$ npm ci --only=production         (download only modules for running the application)
+$ nohup npm start > server.log 2>&1 &
+$ netstat -an |grep 8000
+
+Remote repo: https://gitlab.com/mar24demo/demo.git
+
+
+
+
+HELM
+====
+* Its a packaging manager for kubernetes
+* Package is a collection of manifest files which defines a deployment of a application
+* Helm has a templating engine (go language)
+
+helm install package
+  - default value | uat/prod values
+
+# Install latest Helm version
+$ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+$ helm repo list
+$ helm repo add stable https://charts.helm.sh/stable
+$ helm search repo jenkins
+$ helm show values stable/tomcat
+$ helm show readme stable/tomcat
+$ helm install testchart stable/tomcat
+$ helm install testchart stable/tomcat --version 0.4.0
+$ helm install testchart stable/tomcat --set service.type=NodePort 
+$ helm install testchart stable/tomcat -f values.yml
+$ helm get manifest testchart
+$ helm get values testchart
+$ helm list
+$ helm delete testchart
+$ helm install testprod stable/tomcat --version 0.4.0 -f values4_0.yml
+
+image:
+  tomcat:
+    tag: "6.0"
+resources:
+  limits:
+    cpu: 200m
+    memory: 400Mi
+service:
+  type: NodePort
+  externalPort: 8080
+
+$ helm upgrade testprod stable/tomcat -f values4_3.yml
+$ helm rollback testprod 1
+$ helm history testprod
+$ helm pull --untar stable/tomcat
+
+
+HOW TO RUN AN APPLICATION IN KUBERNETES
+========================================
+* What namespace to use
+* How to create a pod
+ - how many containers are needed (Init, Main, Sidecar)
+ - how much of resources needed to run the containers
+ - what healthcheck to run (liveness, readiness)
+ - what config files are needed
+ - what secrets are needed
+ - what ports to be exposed
+ - what environment variables are cmds  
+ - what volumes to use (logs, persistent volume, claim)
+ - what is the startup cmd or arguments for the startup cmd
+ - any affinity needed
+* How to group the objects
+* How to run a pod
+ - replication/scale (stateless/stateful)
+ - number of replicas 
+ - do we need autoscaling
+* How to access the pod (service)
+* What files are needed to start the application/container
+
+GITOPS
+======
+* Deployment will be secure
+* Trigger deployments for scenario:
+ - when new build is triggered, new image will be deployed
+ - deploy a old image
+ - modify configmap/secret & deploy
+
+$ kubectl create namespace argocd
+$ kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+$ kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort"}}'
+
+For version 1.9 or later:
+$ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d && echo
+
+==================
+CAPSTONE PROJECT
+==================
+# Use t3a.xlarge (not t2.xlarge) i.e 4 cpu & 16 GB and We need Helm 3.7+ for Vault server
+$ curl https://get.helm.sh/helm-v3.12.0-linux-amd64.tar.gz > helm.tar.gz
+$ tar xzvf helm.tar.gz
+$ mv linux-amd64/helm /usr/local/bin
+
+# Ensure Vault server is running 
+
+Argo Rollouts
+-----------------
+# Install controller:
+$ kubectl create namespace argo-rollouts
+$ kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+$ kubectl get pods -n argo-rollouts
+
+# Install plugin:
+$ curl -LO https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64 && chmod +x ./kubectl-argo-rollouts-linux-amd64 &&  sudo mv ./kubectl-argo-rollouts-linux-amd64 /usr/local/bin/kubectl-argo-rollouts
+$ kubectl argo rollouts version
+
+Frontend Deployment
+------------------------------
+$ kubectl apply -f .
+$ kubectl argo rollouts get rollout canary-demo --watch
+$ kubectl argo rollouts promote canary-demo
+
+Backend Deployment
+-----------------------------
+$ kubectl apply -f .
+$ kubectl label nodes <node> servertype=large
+$ kubectl argo rollouts get rollout mongo --watch
+$ kubectl argo rollouts promote mongo
+$ kubectl argo rollouts undo mongo --to-revision=1
+
+Prometheus
+=========
+* 3 parts of monitoring solution
+ - Collection of data (prometheus server)
+ - visualization of data (grafana)
+ - alerting/notification (alert manager)
+
+Create a user for Prometheus on your system
+$ useradd -rs /bin/false prometheus
+ 
+Create a new folder and a new configuration file for Prometheus
+$ mkdir /etc/prometheus
+$ touch /etc/prometheus/prometheus.yml
+
+Create a data folder for Prometheus
+$ mkdir -p /data/prometheus
+$ chown prometheus:prometheus /data/prometheus /etc/prometheus/*
+
+$ vi /etc/prometheus/prometheus.yml
+global:
+  scrape_interval: 5s
+  evaluation_interval: 1m
+# A scrape configuration scraping a Node Exporter and the Prometheus server itself
+scrape_configs:
+  # Scrape Prometheus itself every 10 seconds.
+  - job_name: 'prometheus'
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['localhost:9090']
+
+Get the userid for running Prometheus
+$ cat /etc/passwd | grep prometheus
+
+Create the Prometheus container
+$ docker run --name myprom -d -p 9090:9090 --user 997:997 --net=host -v /etc/prometheus:/etc/prometheus -v /data/prometheus:/data/prometheus prom/prometheus --config.file="/etc/prometheus/prometheus.yml" --storage.tsdb.path="/data/prometheus"
+
+Create a Grafana container
+$ docker run --name grafana -d -p 3000:3000 --net=host grafana/grafana
+
+---------------Monitor A Node -------
+Create a user for Node Exporter
+$ useradd -rs /bin/false node_exporter
+$ cat /etc/passwd | grep node_exporter
+
+Creating Node exporter container
+$ docker run --name exporter -d -p 9100:9100 --user 997:997 -v "/:/hostfs" --net="host" prom/node-exporter --path.rootfs=/hostfs
+ 
+$ vi /etc/prometheus/prometheus.yml
+ - job_name: 'BuildMachine01'
+   static_configs:
+   - targets: ['172.31.2.243:9100']
+
+Restart Prometheus, get the PID & send SIGHUP signal
+$ ps aux | grep prometheus
+$ kill -HUP <PID>
+
+To test Increase the memory
+    $ apt update
+    $ apt install -y stress
+    $ stress --vm 1 --vm-bytes 100M
+
+* User 1860 grafana dashboard
+
+----------------------Monitor Jenkins------------
+- job_name: 'Jenkins'
+  metrics_path: /prometheus
+  static_configs:
+   - targets: ['172.31.5.212:8080']
+
+* Use "9964" Dashboard Id in Grafana
+
+---------------------Monitor Containers---------
+# Run Cadvisor container to collect container metrics
+$ docker run --name cadvisor -d -p 8080:8080 -v /:/rootfs:ro -v /var/run:/var/run:rw -v /sys:/sys:ro -v /var/lib/docker/:/var/lib/docker:ro google/cadvisor
+
+Edit /etc/prometheus/prometheus.yml & add a job for Cadvisor:
+- job_name: 'cadvisor'
+  static_configs:
+  - targets: ['localhost:8080']
+
+* Use 893 grafana dashboard
+
+------------------Monitor SpringBoot Appliction--------
+$ curl -s http://localhost:8080/actuator/health/liveness
+$ curl -s http://localhost:8080/actuator/health/readiness
+
+# Edit /etc/prometheus/prometheus.yml & add below
+  - job_name: 'SpringBoot JVM'
+  metrics_path: '/actuator/prometheus'
+  scrape_interval: 5s
+  static_configs:
+  - targets: ['172.31.2.243:8080']
+
+* Use 12464 grafana dashboard for the SpringBoot APM
+
+Monitor K8s Cluster
+===============
+# Install latest Helm version
+$ curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+
+# Install Prometheus server
+$ helm repo add prometheus-community https://prometheus-community.github.io/helm-charts 
+$ helm install prometheus prometheus-community/prometheus 
+$ kubectl expose service prometheus-server --type=NodePort --target-port=9090 --name=prometheus-server-np
+
+# Install Grafana
+$ helm repo add grafana https://grafana.github.io/helm-charts
+$ helm install grafana grafana/grafana
+$ kubectl expose service grafana --type=NodePort --target-port=3000 --name=grafana-np
+$ kubectl get secret --namespace default grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+
+# Add datasource with the URL for our Prometheus instance is the name of the service "http://prometheus-server:80"
+# Import https://grafana.com/grafana/dashboards/6417 dashboard for Kubernetes monitoring on Grafana
+
+Centralized Log Management (server/app/access)
+======================================
+* Log management using EFK
+* Fluentd - is a log agrregrator for pods, which reads logs from pods and redirects
+* Elasticsearch - is a nosql db to store all the logs & also a search engine
+* Kibana - is a data visualization dashboard
+
+Fluentd - daemonset - ClusterIP
+Elasticsearch - Statefulset - ClusterIP
+Kibana - Deployment - NodePort
+
+$ git clone https://github.com/cdwv/efk-stack-helm
+$ cd efk-stack-helm
+
+- Edit values.yaml, set the below values for rbac & kibana service type:
+rbac:
+  enabled: true
+
+service:   # this is for kibana configuration
+    type: NodePort
+
+- Edit Chart.yaml & add below line
+version: 0.0.1
+
+- Edit templates/kibana-deployment.yaml & change the apiversion
+apiVersion: apps/v1
+
+$ helm install demoefk .
+
+kind: Pod                            
+apiVersion: v1                    
+metadata:                        
+  name: testpod                  
+spec:                                    
+  containers:                      
+    - name: c00                    
+      image: ubuntu              
+      command: ["/bin/bash", "-c", "while true; do echo Hello-Adam-`date`; sleep 5 ; done"]
+  restartPolicy: Never
+
+Clear Cache in Ubuntu:
+$ sync; echo 1 > /proc/sys/vm/drop_caches
+$ sync; echo 2 > /proc/sys/vm/drop_caches
+$ sync; echo 3 > /proc/sys/vm/drop_caches 
+
+
+
+
+===========
+Best Practices - KUBERNETES 
+===========
+
+Concepts:
+-------------
+- Namespace
+- Deployments
+- Replicaset
+- Daemonset
+- Statefullset
+- Service - [clusterIP / Nodeport / Ingress / headless ]
+- Pods [ main container / init container / sidecar container ]
+- Healthchecks
+- Volume - [ emptydir/hostpath ]
+- PersistentVolume & PersistentVolumeClaim
+- ConfigMap & Secret
+- Storageclass
+- Metricserver
+- Autoscaling [ HPA / VPA / ClusterAutoscaler ]
+- Taint/Tolerations
+- Node affinity/Pod affinity or anti-affinity
+- PriorityClass
+- PodDisruptionBudget
+- NetworkPolicy ( Calico )
+- ResourceQuota
+- LimitRange
+- Container hooks
+- CertificateSigningRequest
+- Role & RoleBinding
+- ClusterRole & ClusterRoleBinding
+- serviceAccount
+
+SYNTAX:
+------------
+kind: 
+apiVersion:
+metadata:
+   name:
+   labels:
+spec: 
+    serviceAccount:
+    priorityClassName:
+    affinity:
+    tolerations:
+    volume:
+    nodeselector:
+    initContainers:
+    containers:
+         - name:
+           image:
+           command:
+           env:
+           port:
+           resources:
+                requests:
+                limits:
+           livenessprobe:
+           readinessprobe:
+           lifecycle:
+             postStart:
+             preStop:
+   
+===========   
+Best Practices - [ DOCKERFILE ]
+===========   
+1) Version control the changes - Environment based branching
+2) Choose base images without the full OS
+3) Limit the amount of layers in image 
+4) Run as non-root user
+5) Use specific tag name for image
+6) Use Dockerignore file
+7) Use multi-stage builds
+8) Do not put layers which are specific to environments i.e application configuration files, certificates
+
+SYNTAX
+=======
+FROM          <BaseImage>        # image for creating the intermediate container
+RUN             <command>            # instruction to run OS cmd inside the intermediate container
+CMD                  ["executable","arg1","arg2"]    # user cmd will override the default cmd
+ENTRYPOINT   ["executable","arg1","arg2"]    # always runs default cmd, user cmd is taken as arguments
+COPY         <SRC> <DEST>                    # copies file from docker host to image
+ADD          <SRC> <DEST>                    # extract a archive or download a file from a URL
+USER         <USERNAME>                      # sets the default user
+WORKDIR      <PATH>                          # sets the default workig dir
+ENV          <VARNAME>=<VALUE>               # variable visible in the image
+ARG          <VARNAME>=<VALUE>               # variable only visible in temp container, not on image
+EXPOSE       <PORT#>
+
+
+===========
+Best Practices - TERRAFORM 
+===========
+1) Version control the changes - Environment based branching
+
+2) Multiple user accounts on AWS
+  - dev account for our devops development activities
+  - ops admin account for QA environment
+  - stage & prod admin account for production environment
+
+3) Use profiles & Alias
+
+[profilename]
+accessid=
+secretid=
+region=
+
+provider "aws" {
+  region = "ap-south-1"
+  profile = var.profile_name    # Access/Secret Key rereferred from ~/.aws/credentials #
+  alias = "mumbai"
+}
+
+provider "aws" {
+  alias  = "virginia"               # Alias name for reference #
+  region = "us-east-1"
+  profile = var.profile_name 
+}
+
+resource "aws_instance" "example" {
+  ami           = "ami-0742b4e673072066f"
+  instance_type = "t2.micro"
+  provider = aws.mumbai                 # Alias name to pick the provider #
+}
+resource "aws_instance" "example1" {
+  ami           = "ami-0742b4e673072066f"
+  instance_type = "t2.micro"
+  provider = aws.virginia               # Alias name to pick the provider #
+}
+
+4) Use Specific version info & required providers - version.tf
+  terraform {
+    required_providers {
+      aws = {
+         source = "hasicorp/aws"
+         version = "~> 1.0"
+      }
+    }
+   }
+
+5) DRY principle - use variables & modules
+6) Use remote state file & state-lock
+
+7) Manage terraform logs (Log level: Info, Debug, Warn, Error, Trace)
+$ export TF_LOG=TRACE
+$ export TF_LOG_PATH=/tmp/terraformlog.txt
+
+8) DevSecops - Dynamic Secrets using Hashicorp Vault
+
+TYPES OF BLOCKS
+================
+0. version block
+1. provider block
+2. resource block
+3. data block
+4. backend block
+5. variable block
+6. output block
+7. local block
+8. module block
+9. dynamic block
+10. provisioner block
+
+CONCEPTS
+=========
+# implicit & explicit dependencies
+# import
+# loop
+# conditions
+# taint
+# null_resource
+# profile/alias
+
+META ARGUMENTS
+================
+# depends_on: used to specify the explicit dependency between 2 resources
+# count: loops a resource block as a list of value
+# for_each: loops a resource block as a map 
+# provider: specifically pick a provider block
+
+SYNTAX
+=======
+   provider "providername" {
+     key = value
+   }
+
+   resource "provider_resourcetype" "name" {
+      key = value
+   }
+
+   data "provider_datatype" "name" {
+     key = value
+   }
+
+   backend "type" {
+     key = value
+   }
+
+   variable "name" {
+     type = list/map
+     default = value
+   }
+
+   output "name" {
+      value = resource/data.type.name.attribute
+   }
+  
+   local "name" {
+       variablename = value
+   }
+
+   module "name" {
+      source = "location"
+      variable = value
+   }
+  
+   provisioner "type" {
+      command = value
+   }
+
+
+===============
+DevOps Projects - IAC/Terraform
+===============
+* Developed modules for network to support public(frontend) & private(backend) infra  
+* Developed modules for Auto-scaling, load balancers(ALB) to support high availability
+* Developed module for EC2 provisioning 
+* Developed module for EKS
+
+===============
+DevOps Projects - Containerization/Dockerfile
+===============
+* Containerization of a Backend Java springboot microservices - generating Application Image
+* Containerization of a frontend React js microservices - generating Application Image
+
+===============
+DevOps Projects - Kubernetes
+===============
+* Developed Manifest files to deploy Backend Java springboot microservices in k8s - yml files
+* Developed Manifest files to deploy frontend React js microservices in k8s - yml files
+* Creating/Upgrading Kubernetes clusters using EKS
+* Enabled Gitops based deployments on Kubernetes - ArgoCD, Argo Rollouts
+
+===============   
+DevOps Projects [ Pipeline/Jenkins/DevSecOps ]
+=============== 
+* Developed Jenkinsfile (Pipeline as Code) for Backend Java springboot microservices Build Pipeline 
+* Developed Jenkinsfile (Pipeline as Code) for frontend React js microservices Build Pipeline 
+* Setup Deployment pipelines for Java/Node microservices to support Release activities cross different environments QA/Stage/Production
+* Enabled DevSecops pipelines for Infra provisioning for catching the IAC misconfigurations and to handle approvals automatically
+* Setup DevSecops based CICD pipeline for SCA, SAST, DAST, Vulnerabilities
+
+===============   
+DevOps Projects [ Montioring ]
+===============
+* Enabled Continuous Monitoring solution i.e collect, visualize, alerts using Prometheus, Grafana
+* Enabled Centralized Log management for all applications running in QA & Prod using EFK
+
+Roles & Responsibilities
+===================
+* Support Continuous Development for projects - Manage Gitlab, namespaces, groups, projects, branching strategies, developer workflow
+* Automate Infrastructure provisioning using IAC - Terraform
+* Automate Configuration Management of different servers like Dev, QA, Build, Stage or Production using Ansible
+* Automate Formal Builds like Continuous Integration, Full/Nightly Build, Release, Integration pipelines
+* Automate Continuous Delivery & Deployment pipelines
+* Containerization of Microservices - Develop App Image
+* Automated Kubernetes Deployments using Gitops & Helm
+* Support Centralized Log management - EFK
+* Continuous Monitoring of Build server, Deployment server, Kubernetes Cluster, Application, Services - setup a monitoring solution
+* Ensure the security of the DevOps process & pipeline
+* Cloudops - EKS
+
+Day-Day Tasks
+============
+* Standup Meeting (Scrum/Kanban), Release Planning, CAB meeting
+* Customer tickets or Dev/QA tickets or Internal project Jira Tickets/MS Teams/Slack/ServiceNow
+* Monitor all the services, servers, applications on UAT/Prod environments
+* Monitor all the build, deployment, other pipelines are running fine
+* Manage Gitlab groups, Manage gitlab projects, manage branches, approval, merges, webhook
+* Develop Terraform configuration files, modules to support provisioning Dev/QA/stage/prod environments
+* Develop Ansible Playbook/Roles for automating configuration of servers 
+* Develop Jenkins Pipeline for automating various builds like CI, Nightly, BaseImage, Continious Delivery and IAC pipelines, Configuration Management Pipelines
+* Setup, Configure & Maintain Jenkins Master, Jenkins Slaves, plugin management, backup, permissions
+* Maintain Jenkins jobs for various build pipeline automation & IAC/CM
+* Develop Dockerfile for AppImage (Jar/War, start/stop scripts, healthcheck scripts, monitoring agent)
+* Setup Gitops operator using ArgoCD for Dev/QA/UAT/Prod environments
+* Develop Kubernetes Manifest for Application deployment, log management
+* Develop Helm packages for Microservice deployment, DevOps applications
+* Develop Monitoring solution and Alerting rules for notifiation using Prometheus, Grafana
+   - configure exporters, configure targets to scarpe frequently, setup rules, setup dashboards
+* Implement DevSecOps at every level of DevOps 
+* Collaborate with stakeholders
+
+Maintenance usecase:
+ - any updates to the qa/production/stage servers
+ - any changes/updates to the qa/production/stage infra
+ - any changes/updates to the qa/production/stage application or deployments
+ - any changes/updates to 3rd party application in the qa/production/stage infra
+ - any changes/updates to EKS clusters in QA/STAGE/PRODUCTION
+
+Change Approval Board (CAB): Change Request
+# when the maintenance window is going to be performed  (Date/time)
+# what exactly the maintenance is about
+# Severity
+# Imapct to the customers
+# Rollback Mechanism
+- Send notification about starting/ending of maintenance
+
+More Projects on our Youtube Channel:
+==============================
+- K8s deployment strategy
+- K8s debugging 
+- Golden Images using packer/terrform
+- Docker Image optimization
+- Managing Dynamic secrets using Hashicorp Vault for Infra provisioning
+
+* IAC - Terraform
+* CAC - Ansible
+* DVCS - Gitlab, Git
+* Pipeline - Jenkins
+* Containerization - Docker
+* Orchestration of Containers - Kubernetes
+* Continuous Monitoring - Prometheus, Grafana, EFK
+* Continuous Delivery (Gitops) - ArgoCD, Argo Rollout
+* DevSecops - Checkov, Hashicorp vault, haldo, clair, Sonarqube
+* Cloud - AWS
+
+* Collecting the information - discussion with stakeholders (developers, Testers, Support engineers, product managers)
+* Design 
+* develop code with best practices
+* test and review
+
+

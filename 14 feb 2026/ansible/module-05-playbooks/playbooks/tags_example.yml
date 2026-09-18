@@ -1,0 +1,29 @@
+---
+- name: Full server setup
+  hosts: webservers
+  become: yes
+  tasks:
+    - name: Install packages
+      apt:
+        name: [nginx, php-fpm]
+        state: present
+      tags: [install, packages]
+
+    - name: Copy nginx config
+      template:
+        src: nginx.conf.j2
+        dest: /etc/nginx/nginx.conf
+      tags: [configure, nginx]
+
+    - name: Deploy application
+      copy:
+        src: app/
+        dest: /var/www/html/
+      tags: [deploy]
+
+    - name: Start services
+      service:
+        name: "{{ item }}"
+        state: started
+      loop: [nginx, php8.1-fpm]
+      tags: [services, always]

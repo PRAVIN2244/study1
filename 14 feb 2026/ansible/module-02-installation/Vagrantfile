@@ -1,0 +1,26 @@
+# Vagrantfile
+Vagrant.configure("2") do |config|
+  config.vm.define "control" do |control|
+    control.vm.box = "ubuntu/jammy64"
+    control.vm.hostname = "control"
+    control.vm.network "private_network", ip: "192.168.56.10"
+    control.vm.provider "virtualbox" do |vb|
+      vb.memory = "2048"
+    end
+    control.vm.provision "shell", inline: <<-SHELL
+      apt-get update && apt-get install -y ansible sshpass
+    SHELL
+  end
+
+  config.vm.define "web1" do |web|
+    web.vm.box = "ubuntu/jammy64"
+    web.vm.hostname = "web1"
+    web.vm.network "private_network", ip: "192.168.56.11"
+  end
+
+  config.vm.define "db1" do |db|
+    db.vm.box = "ubuntu/jammy64"
+    db.vm.hostname = "db1"
+    db.vm.network "private_network", ip: "192.168.56.12"
+  end
+end
