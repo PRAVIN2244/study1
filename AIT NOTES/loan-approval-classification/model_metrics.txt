@@ -1,0 +1,5 @@
+Loan Approval Logistic Regression - Evaluation Results
+Accuracy: 66.67%
+Precision: 75.00%
+Recall: 75.00%
+F1 Score: 75.00%

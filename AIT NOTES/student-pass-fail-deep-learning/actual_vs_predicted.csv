@@ -1,0 +1,9 @@
+Actual Result,Predicted Result,Pass Probability
+Pass,Pass,0.9942025
+Pass,Pass,0.99980503
+Fail,Fail,0.42069894
+Pass,Pass,0.7151959
+Fail,Fail,0.42069894
+Pass,Pass,0.9035953
+Fail,Fail,0.42069894
+Pass,Pass,0.9999995

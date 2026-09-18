@@ -1,0 +1,176 @@
+================================================================
+ASSIGNMENT 2: Loan Approval Prediction Using Classification
+================================================================
+
+OBJECTIVE
+---------
+Build, train, evaluate and test a classification model that predicts
+whether a loan application is likely to be Approved or Rejected.
+
+PROJECT OVERVIEW
+----------------
+Business Problem
+A bank receives loan applications from customers. Use historical
+application data to predict whether a new application will be Approved
+or Rejected.
+
+Input Features and Target
+Input features:
+  Gender, Married, Dependents, Education, Self Employed,
+  Applicant Income, Coapplicant Income, Loan Amount / Loan Term,
+  Credit History, Property Area
+
+Target:
+  Loan_Status
+  Y = Approved
+  N = Rejected
+
+RECOMMENDED ALGORITHM
+---------------------
+Primary algorithm: Logistic Regression. Implement this as the main
+classification model.
+
+Optional comparison models:
+  - Decision Tree
+  - Random Forest
+
+TECHNOLOGY STACK
+----------------
+Python, NumPy, Pandas, Matplotlib, Seaborn and Scikit-learn.
+
+Project Flow
+------------
+Loan Data -> Preprocessing -> Classification Model -> Approved / Rejected
+
+ASSIGNMENT TASKS
+----------------
+01. Understand the Business Problem
+    Define the loan-approval problem and prediction target.
+02. Collect / Download Dataset
+    Download a suitable Loan Approval dataset.
+03. Load Dataset Using Pandas
+    Read the dataset and inspect the first records.
+04. Perform Data Understanding
+    Use head(), shape, info(), describe() and missing-value checks.
+05. Perform EDA
+    Explore income, loan amount, credit history, education, property area
+    and target distribution.
+06. Identify X and y
+    Select independent variables X and target y = Loan_Status.
+07. Handle Missing Values
+    Identify and handle missing values using suitable techniques.
+08. Remove Unnecessary Columns
+    Remove identifiers or irrelevant columns.
+09. Encode Categorical Data
+    Convert Gender, Education, Property Area and other categorical data
+    into numerical form.
+10. Train / Test Split
+    Split data into 80% training and 20% testing.
+11. Build Logistic Regression
+    Create a Scikit-learn LogisticRegression() model.
+12. Train the Model
+    Train the model using the training dataset.
+13. Make Predictions
+    Predict Approved or Rejected for test applications.
+14. Evaluate the Model
+    Calculate Accuracy, Precision, Recall, F1-Score and a Confusion Matrix.
+15. Visualize Results
+    Create target-distribution, feature-relationship and confusion-matrix
+    visualizations.
+16. Test New Application
+    Create a new applicant record and predict Approved or Rejected.
+17. Write the Conclusion
+    Summarize performance, observations, limitations and improvements.
+
+TECHNICAL REQUIREMENTS
+----------------------
+EDA and Data Understanding:
+  - head(): first records
+  - shape: rows and columns
+  - info(): columns and data types
+  - describe(): numerical summary
+  - Missing values: identify and handle nulls
+  - Target distribution: Approved vs Rejected counts
+
+Recommended Visualizations:
+  Loan Status                 Count Plot / Bar Chart
+  Applicant Income            Histogram
+  Loan Amount                 Histogram / Box Plot
+  Credit History vs Status    Count Plot
+  Numerical relationships     Correlation Heatmap
+
+CLASSIFICATION METRICS
+----------------------
+Accuracy: Overall correct predictions. Higher is better.
+Precision: Correct positive predictions among predicted positives.
+Recall: Correctly identified positive cases.
+F1-Score: Balance between Precision and Recall.
+Confusion Matrix: Correct and incorrect classification counts.
+
+NEW LOAN APPLICATION
+--------------------
+Sample values:
+  Gender: Male
+  Married: Yes
+  Dependents: 0
+  Education: Graduate
+  Applicant Income: INR 50,000
+  Loan Amount: INR 2,00,000
+  Credit History: 1
+  Property Area: Urban
+
+Prediction Flow
+New Applicant -> Trained Model -> Loan Approved / Rejected
+
+IMPORTANT
+---------
+Educational project only. Real lending systems require fairness,
+explainability, regulatory compliance and human oversight.
+
+EXPECTED LEARNING OUTCOMES
+--------------------------
+1. Understand a real-world Classification problem.
+2. Understand how ML can support loan-approval decisions.
+3. Load and preprocess data using Pandas.
+4. Handle missing values and categorical features.
+5. Perform EDA and identify patterns.
+6. Separate X and y.
+7. Build and train Logistic Regression.
+8. Make predictions for unseen applications.
+9. Evaluate Accuracy, Precision, Recall and F1-Score.
+10. Interpret a Confusion Matrix.
+11. Test a new loan application.
+12. Explain model performance and limitations.
+
+SUBMISSION CHECKLIST
+--------------------
+01. Dataset collected
+02. Dataset loaded
+03. Data understanding completed
+04. Missing values handled
+05. EDA completed
+06. X and y identified
+07. Unnecessary columns removed
+08. Categorical features encoded
+09. 80/20 split completed
+10. Logistic Regression created
+11. Model trained
+12. Predictions generated
+13. Accuracy calculated
+14. Precision calculated
+15. Recall calculated
+16. F1-Score calculated
+17. Confusion Matrix interpreted
+18. New application tested
+19. Conclusion written
+
+STUDENT CHALLENGE
+-----------------
+Be ready to explain:
+  - Why is this a Classification problem?
+  - Why is Logistic Regression suitable?
+  - What does Credit History contribute?
+
+Assignment Standard
+Submit clean code, meaningful visualizations, evaluation metrics,
+observations and a clear conclusion.

@@ -1,0 +1,342 @@
+================================================================
+Assignment 1: Develop an ML Model using Linear Regression
+================================================================
+
+OBJECTIVE
+---------
+Build a Machine Learning model using Linear Regression to predict a
+continuous numerical value based on one or more input features.
+
+SUGGESTED PROJECT
+-----------------
+House Price Prediction using Linear Regression
+
+The model predicts the price of a house based on:
+  - Area / Square Feet
+  - Number of Bedrooms
+  - Number of Bathrooms
+  - Age of House
+
+Note: Floors and location-related features are possible extensions, but
+the current dataset and model use area, bedrooms, bathrooms, and age.
+
+TECHNOLOGIES
+------------
+  - Python
+  - NumPy
+  - Pandas
+  - Matplotlib
+  - Seaborn
+  - Scikit-learn
+  - Streamlit
+  - Pickle
+
+DATASET
+-------
+File: dataset.csv
+
+Columns:
+  area       : Area of the house in square feet
+  bedrooms   : Number of bedrooms
+  bathrooms  : Number of bathrooms
+  age        : Age of the house in years
+  price      : House price in INR (target variable)
+
+Sample data:
+area,bedrooms,bathrooms,age,price
+1000,2,2,10,5000000
+1200,2,2,8,6000000
+1500,3,2,7,7500000
+1800,3,3,5,9000000
+2000,4,3,6,10000000
+2200,4,3,4,11000000
+2500,4,4,3,13000000
+2800,5,4,2,15000000
+3000,5,4,1,17000000
+3500,5,5,1,20000000
+
+ASSIGNMENT TASKS IMPLEMENTED
+----------------------------
+1. Understand the business problem.
+   Predict a house price from its physical features.
+
+2. Collect or download a suitable dataset.
+   A sample dataset is included in dataset.csv.
+
+3. Load the dataset using Pandas.
+   pandas.read_csv("dataset.csv") is used in main.py.
+
+4. Perform basic data understanding.
+   The program displays:
+     - head()
+     - tail()
+     - shape
+     - column names
+     - info()
+     - describe()
+     - missing value count
+     - duplicate record count
+
+5. Perform Exploratory Data Analysis (EDA).
+   The program creates:
+     - plots/area_vs_price.png
+     - plots/correlation_heatmap.png
+
+6. Identify variables.
+   Independent variables (X): area, bedrooms, bathrooms, age
+   Dependent/target variable (y): price
+
+7. Handle missing values and unnecessary columns.
+   Rows missing an essential feature or price are removed. Duplicate rows
+   are removed. The sample dataset has no missing or duplicate values.
+
+8. Split the dataset.
+   80% is used for training and 20% is used for testing.
+
+9. Build a Linear Regression model.
+   sklearn.linear_model.LinearRegression is used.
+
+10. Train the model.
+    model.fit(X_train, y_train)
+
+11. Make predictions on the test data.
+    model.predict(X_test)
+
+12. Evaluate the model.
+    Metrics used: MAE, MSE, RMSE, and R-squared score.
+
+13. Compare actual and predicted values.
+    Saved in actual_vs_predicted.csv.
+
+14. Visualize regression results.
+    Saved in plots/actual_vs_predicted.png.
+
+15. Test with new/unseen input data.
+    main.py tests a sample house and app.py accepts interactive input.
+
+16. Write a conclusion.
+    The model obtained an R-squared score of 0.9837 on the included test
+    split. This indicates a strong fit for this small, synthetic dataset.
+    More real-world data should be used before making real pricing decisions.
+
+TRAINING RESULTS
+----------------
+MAE:       528,623.19
+MSE:       491,620,647,507.78
+RMSE:      701,156.65
+R-squared: 0.9837
+
+GENERATED FILES
+---------------
+  house_price_model.pkl              Saved trained Linear Regression model
+  actual_vs_predicted.csv            Test prediction comparison
+  plots/area_vs_price.png            EDA scatter plot
+  plots/correlation_heatmap.png      EDA heatmap
+  plots/actual_vs_predicted.png      Model performance plot
+
+STREAMLIT USER INTERFACE
+------------------------
+File: app.py
+
+The UI loads house_price_model.pkl and takes the following input:
+  - Area (Square Feet)
+  - Number of Bedrooms
+  - Number of Bathrooms
+  - House Age (Years)
+
+When the user selects "Predict House Price", the application creates a
+Pandas DataFrame, calls model.predict(), extracts the first result with
+[0], and displays the price in INR.
+
+HOW TO RUN THE PROJECT
+----------------------
+1. Open a terminal in this folder.
+2. Install required packages:
+   pip install -r requirements.txt
+
+3. Train and save the model (already completed for this project):
+   python main.py
+
+4. Start the Streamlit user interface:
+   streamlit run app.py
+
+PROJECT STRUCTURE
+-----------------
+house-price-linear-regression/
+  app.py
+  assignment_details.txt
+  dataset.csv
+  main.py
+  requirements.txt
+  README.md
+  house_price_model.pkl
+  actual_vs_predicted.csv
+  plots/
+
+================================================================
+requirements.txt
+================================================================
+
+numpy>=1.24.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+scikit-learn>=1.3.0
+streamlit>=1.35.0
+
+================================================================
+main.py
+================================================================
+
+import pickle
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import train_test_split
+
+BASE_DIR = Path(__file__).parent
+DATA_PATH = BASE_DIR / "dataset.csv"
+MODEL_PATH = BASE_DIR / "house_price_model.pkl"
+PLOTS_DIR = BASE_DIR / "plots"
+FEATURES = ["area", "bedrooms", "bathrooms", "age"]
+
+
+def save_eda_plots(df):
+    PLOTS_DIR.mkdir(exist_ok=True)
+    sns.set_theme(style="whitegrid")
+
+    plt.figure(figsize=(8, 5))
+    plt.scatter(df["area"], df["price"], color="royalblue", s=70)
+    plt.xlabel("Area (square feet)")
+    plt.ylabel("House price (INR)")
+    plt.title("Area vs House Price")
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / "area_vs_price.png", dpi=150)
+    plt.close()
+
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(df.corr(numeric_only=True), annot=True, cmap="Blues", fmt=".2f")
+    plt.title("Feature Correlation Heatmap")
+    plt.tight_layout()
+    plt.savefig(PLOTS_DIR / "correlation_heatmap.png", dpi=150)
+    plt.close()
+
+
+df = pd.read_csv(DATA_PATH)
+print(df.head())
+print(df.tail())
+print(df.shape)
+print(df.columns)
+df.info()
+print(df.describe())
+print(df.isnull().sum())
+print(df.duplicated().sum())
+
+df = df.dropna(subset=FEATURES + ["price"]).drop_duplicates()
+save_eda_plots(df)
+
+# X contains independent variables; y contains the target variable.
+X = df[FEATURES]
+y = df["price"]
+
+# Split the data: 80% training and 20% testing.
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.20, random_state=42
+)
+
+model = LinearRegression()
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+results = pd.DataFrame({
+    "Actual Price": y_test.to_numpy(),
+    "Predicted Price": y_pred,
+})
+print(results)
+
+mae = mean_absolute_error(y_test, y_pred)
+mse = mean_squared_error(y_test, y_pred)
+rmse = mse ** 0.5
+r2 = r2_score(y_test, y_pred)
+print("MAE:", mae)
+print("MSE:", mse)
+print("RMSE:", rmse)
+print("R2 Score:", r2)
+
+plt.figure(figsize=(7, 5))
+plt.scatter(y_test, y_pred, color="seagreen", s=80)
+low, high = min(y_test.min(), y_pred.min()), max(y_test.max(), y_pred.max())
+plt.plot([low, high], [low, high], "r--", label="Perfect prediction")
+plt.xlabel("Actual price (INR)")
+plt.ylabel("Predicted price (INR)")
+plt.title("Actual vs Predicted House Prices")
+plt.legend()
+plt.tight_layout()
+plt.savefig(PLOTS_DIR / "actual_vs_predicted.png", dpi=150)
+plt.close()
+
+new_house = pd.DataFrame({
+    "area": [5000], "bedrooms": [7], "bathrooms": [7], "age": [1]
+})
+predicted_price = model.predict(new_house)[0]
+print("Predicted House Price (INR):", predicted_price)
+
+with open(MODEL_PATH, "wb") as file:
+    pickle.dump(model, file)
+results.to_csv(BASE_DIR / "actual_vs_predicted.csv", index=False)
+
+================================================================
+app.py
+================================================================
+
+import pickle
+from pathlib import Path
+
+import pandas as pd
+import streamlit as st
+
+BASE_DIR = Path(__file__).parent
+MODEL_PATH = BASE_DIR / "house_price_model.pkl"
+CHART_PATH = BASE_DIR / "plots" / "actual_vs_predicted.png"
+
+
+@st.cache_resource
+def load_model():
+    with open(MODEL_PATH, "rb") as file:
+        return pickle.load(file)
+
+
+st.set_page_config(page_title="House Price Prediction", page_icon="house", layout="centered")
+st.title("House Price Prediction")
+st.write("Enter the house details below to predict the price.")
+
+if not MODEL_PATH.exists():
+    st.error("No trained model found. Run: python main.py")
+    st.stop()
+
+with st.form("house_prediction"):
+    area = st.number_input("Area (Square Feet)", min_value=100, max_value=10000, value=2000, step=100)
+    bedrooms = st.number_input("Number of Bedrooms", min_value=1, max_value=20, value=3, step=1)
+    bathrooms = st.number_input("Number of Bathrooms", min_value=1, max_value=20, value=2, step=1)
+    age = st.number_input("House Age (Years)", min_value=0, max_value=100, value=5, step=1)
+    predict = st.form_submit_button("Predict House Price", type="primary")
+
+if predict:
+    new_house = pd.DataFrame({
+        "area": [area],
+        "bedrooms": [bedrooms],
+        "bathrooms": [bathrooms],
+        "age": [age],
+    })
+    predicted_price = load_model().predict(new_house)[0]
+    st.success(f"Predicted House Price: INR {predicted_price:,.2f}")
+
+if CHART_PATH.exists():
+    st.image(str(CHART_PATH), caption="Actual vs Predicted test prices")
+
+st.markdown("---")
+st.write("Machine Learning Model: Linear Regression")
