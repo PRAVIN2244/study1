@@ -1,0 +1,40 @@
+---
+- name: Configure application based on environment
+  hosts: webservers
+  become: yes
+
+  vars:
+    environments:
+      dev:
+        debug: true
+        replicas: 1
+        db_host: dev-db.internal
+        log_level: DEBUG
+      staging:
+        debug: true
+        replicas: 2
+        db_host: staging-db.internal
+        log_level: INFO
+      production:
+        debug: false
+        replicas: 5
+        db_host: prod-db.internal
+        log_level: WARNING
+
+  tasks:
+    - name: Set environment config
+      set_fact:
+        env_config: "{{ environments[target_env | default('dev')] }}"
+
+    - name: Deploy configuration
+      template:
+        src: app.conf.j2
+        dest: /opt/app/config.yml
+      vars:
+        debug_mode: "{{ env_config.debug }}"
+        db_host: "{{ env_config.db_host }}"
+        log_level: "{{ env_config.log_level }}"
+
+    - name: Show active config
+      debug:
+        msg: "Environment: {{ target_env | default('dev') }}, DB: {{ env_config.db_host }}, Log: {{ env_config.log_level }}"

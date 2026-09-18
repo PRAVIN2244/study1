@@ -1,0 +1,44 @@
+---
+- name: Register variable examples
+  hosts: webservers
+
+  tasks:
+    - name: Check disk space
+      command: df -h /
+      register: disk_result
+
+    - name: Show full registered variable
+      debug:
+        var: disk_result
+
+    - name: Show just stdout
+      debug:
+        msg: "{{ disk_result.stdout }}"
+
+    - name: Show stdout as list of lines
+      debug:
+        msg: "{{ disk_result.stdout_lines }}"
+
+    - name: Show return code
+      debug:
+        msg: "Return code: {{ disk_result.rc }}"
+
+    - name: Check if nginx is installed
+      command: which nginx
+      register: nginx_check
+      ignore_errors: yes
+
+    - name: Install nginx if not found
+      apt:
+        name: nginx
+        state: present
+      when: nginx_check.rc != 0
+      become: yes
+
+    - name: Get list of running services
+      shell: systemctl list-units --type=service --state=running --no-pager | grep running
+      register: running_services
+
+    - name: Check if nginx is running
+      debug:
+        msg: "Nginx is {{ 'running' if 'nginx' in running_services.stdout else 'not running' }}"

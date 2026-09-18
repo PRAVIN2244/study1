@@ -1,0 +1,74 @@
+---
+- name: Error handling examples
+  hosts: webservers
+  become: yes
+
+  tasks:
+    # ignore_errors
+    - name: This might fail
+      command: /opt/app/check_status.sh
+      ignore_errors: yes
+
+    - name: This runs regardless
+      debug:
+        msg: "Continuing..."
+
+    # block / rescue / always
+    - name: Deploy with rollback
+      block:
+        - name: Deploy new version
+          copy:
+            src: app-v2/
+            dest: /var/www/html/
+
+        - name: Run migrations
+          command: /opt/app/migrate.sh
+
+      rescue:
+        - name: Rollback to previous version
+          copy:
+            src: app-v1/
+            dest: /var/www/html/
+
+        - name: Send failure notification
+          mail:
+            to: ops@company.com
+            subject: "Deployment FAILED on {{ inventory_hostname }}"
+
+      always:
+        - name: Ensure app is running
+          service:
+            name: myapp
+            state: started
+
+    # failed_when / changed_when
+    - name: Run health check
+      command: /opt/app/healthcheck.sh
+      register: health_result
+      failed_when: "'CRITICAL' in health_result.stdout"
+
+    - name: Check version (read-only, never "changed")
+      command: cat /opt/app/VERSION
+      register: version
+      changed_when: false
+
+# Stop ALL hosts if ANY host fails
+- name: Critical deployment
+  hosts: webservers
+  any_errors_fatal: true
+  tasks:
+    - name: Deploy
+      copy:
+        src: app/
+        dest: /var/www/html/
+
+# Stop if more than 30% fail
+- name: Rolling update
+  hosts: webservers
+  max_fail_percentage: 30
+  serial: 5
+  tasks:
+    - name: Update
+      apt:
+        name: myapp
+        state: latest

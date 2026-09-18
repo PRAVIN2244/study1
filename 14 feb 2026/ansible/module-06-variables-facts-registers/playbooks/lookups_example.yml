@@ -1,0 +1,21 @@
+---
+- name: Lookup examples
+  hosts: localhost
+  connection: local
+
+  tasks:
+    - name: Read environment variable
+      debug:
+        msg: "{{ lookup('env', 'HOME') }}"
+
+    - name: Generate random password
+      debug:
+        msg: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters,digits') }}"
+
+    - name: Get current date
+      debug:
+        msg: "{{ lookup('pipe', 'date +%Y-%m-%d') }}"
+
+    - name: Read hostname
+      debug:
+        msg: "{{ lookup('lines', 'cat /etc/hostname') }}"

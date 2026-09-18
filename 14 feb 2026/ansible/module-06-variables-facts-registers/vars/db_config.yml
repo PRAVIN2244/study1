@@ -1,0 +1,5 @@
+---
+db_host: db1.example.com
+db_port: 5432
+db_name: myapp_production
+db_user: myapp_user
